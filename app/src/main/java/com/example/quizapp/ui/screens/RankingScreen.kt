@@ -39,20 +39,20 @@ fun RankingScreen(
                 NavigationBarItem(
                     selected = false,
                     onClick = onHomeClick,
-                    icon = { Icon(painterResource(R.drawable.bottom_btn1), contentDescription = null) },
-                    label = { Text("Início") }
+                    icon = { Icon(painterResource(R.drawable.bottom_btn1), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Início", color = Color.Black) }
                 )
                 NavigationBarItem(
                     selected = true,
                     onClick = {},
-                    icon = { Icon(painterResource(R.drawable.bottom_btn2), contentDescription = null) },
-                    label = { Text("Ranking") }
+                    icon = { Icon(painterResource(R.drawable.bottom_btn2), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Ranking", color = Color.Black) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onProfileClick,
-                    icon = { Icon(painterResource(R.drawable.bottom_btn4), contentDescription = null) },
-                    label = { Text("Perfil") }
+                    icon = { Icon(painterResource(R.drawable.bottom_btn4), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Perfil", color = Color.Black) }
                 )
             }
         }
@@ -156,7 +156,8 @@ fun RankingRow(rank: Int, name: String, score: Int) {
             text = name,
             fontWeight = if (name.contains("Você")) FontWeight.ExtraBold else FontWeight.Medium,
             modifier = Modifier.weight(1f),
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            color = Color.Black
         )
 
 
@@ -173,6 +174,9 @@ fun RankingRow(rank: Int, name: String, score: Int) {
 @Composable
 fun RankingScreenPreview() {
     QuizAppTheme {
-        RankingScreen(onHomeClick = {}, onProfileClick = {})
+        RankingScreen(
+            onHomeClick = {},
+            onProfileClick = {}
+        )
     }
 }

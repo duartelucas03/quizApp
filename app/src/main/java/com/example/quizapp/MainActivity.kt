@@ -4,14 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.quizapp.data.SampleData
+import com.example.quizapp.ui.navigation.* // Importa suas rotas (signIn, signUp, etc)
+import com.example.quizapp.ui.screens.QuizScreen
 import com.example.quizapp.ui.theme.QuizAppTheme
+import com.example.quizapp.ui.viewmodel.UserViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,29 +23,102 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             QuizAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                val navController = rememberNavController()
+                QuizNavHost(navController = navController)
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun QuizNavHost(navController: NavHostController) {
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    QuizAppTheme {
-        Greeting("Android")
+    val userViewModel: UserViewModel = viewModel()
+
+    NavHost(
+        navController = navController,
+        startDestination = signInRoute
+    ) {
+        // Configuração da tela de Login
+        signInScreen(
+            onNavigateToHome = {
+                navController.navigate(homeRoute) {
+                    popUpTo(signInRoute) { inclusive = true }
+                }
+            },
+            onNavigateToSignUp = {
+                navController.navigateToSignUp()
+            }
+        )
+
+        // Configuração da tela de Cadastro
+        signUpScreen(
+            onNavigationToSignIn = {
+                navController.popBackStack()
+            }
+        )
+
+        // Configuração da Home
+        homeScreen(
+            onNavigateToRanking = {
+                navController.navigate(rankingRoute)
+            },
+            onNavigateToProfile = {
+                navController.navigate(statsRoute)
+            },
+            onNavigateToQuiz = { quizId ->
+                navController.navigate("quiz_screen/$quizId")
+            }
+        )
+
+        // Configuração do Ranking
+        rankingScreen(
+            onNavigateToHome = {
+                navController.navigate(homeRoute)
+            },
+            onNavigateToProfile = {
+                navController.navigate(statsRoute) {
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        )
+
+        // Perfil / Estatísticas (Onde incluímos o botão vermelho de Sair)
+        profileScreen(
+            onLogout = {
+                navController.navigate(signInRoute) {
+                    // Limpa todo o histórico de navegação ao deslogar
+                    popUpTo(0)
+                }
+            },
+            onHomeClick = {
+                navController.navigate(homeRoute)
+            },
+            onRankingClick = {
+                navController.navigate(rankingRoute)
+            },
+            viewModel = userViewModel
+        )
+
+
+        // Rota que aceita um argumento (o nome do quiz)
+        composable("quiz_screen/{quizId}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("quizId") ?: ""
+            QuizScreen(
+                quizId = id,
+                onQuizFinished = { score, timeFormatted ->
+                    val quiz = SampleData.quizCategories.find { it.id.toString() == id }
+                    userViewModel.addQuizResult(
+                        quizTitle = quiz?.title ?: "Quiz",
+                        score = score,
+                        totalQuestions = quiz?.questionCount ?: 0,
+                        time = timeFormatted,
+                        color = quiz?.color ?: Color.Gray
+                    )
+                    navController.navigate(statsRoute)
+                }
+            )
+        }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +46,7 @@ fun SignUpScreen(
 
     Column(modifier
         .fillMaxSize()
+        .safeDrawingPadding()
         .pointerInput(Unit) {
             detectTapGestures(onTap = { focusManager.clearFocus() }) }
     ) {
@@ -67,6 +69,19 @@ fun SignUpScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            OutlinedTextField(
+                value = uiState.name,
+                onValueChange = uiState.onNameChange,
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(25),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = BlueBackgroundDark,
+                    unfocusedTextColor = BlueBackgroundDark,
+                    focusedLeadingIconColor = BlueBackgroundDark),
+                label = {
+                    Text(text = "Nome")
+                }
+            )
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = uiState.onEmailChange,

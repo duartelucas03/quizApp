@@ -1,6 +1,8 @@
 package com.example.quizapp.ui.state
 
 data class SignUpUiState(
+    val name: String = "",
+    val onNameChange: (String) -> Unit = {},
     val email: String = "",
     val password: String = "",
     val confirmPassword: String = "",

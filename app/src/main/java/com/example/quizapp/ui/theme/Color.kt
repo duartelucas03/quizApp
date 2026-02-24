@@ -2,26 +2,20 @@ package com.example.quizapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Tons de Azul (Base: 0xFF1A237E)
+val BluePrimary = Color(0xFF1A237E)
+val BluePrimaryLight = Color(0xFF534BAE)
+val BluePrimaryDark = Color(0xFF000051)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
-val BluePrimary = Color(0xFF1565C0)
+// Cores de Apoio
+val BlueSecondary = Color(0xFF3F51B5)
 val BlueOnPrimary = Color(0xFFFFFFFF)
-val BlueSecondary = Color(0xFF42A5F5)
-val BlueBackground = Color(0xFFF4F6F8)
+val BlueOnPrimaryDark = Color(0xFFE8EAF6)
 
-// 🌙 Dark Theme
-val BluePrimaryDark = Color(0xFF1565C0
+// Backgrounds
+val BlueBackground = Color(0xFFF5F5F7) // Cinza azulado muito claro para contraste
+val BlueBackgroundDark = Color(0xFF121212) // Padrão Dark Mode
 
-)
-val BlueOnPrimaryDark = Color(0xFFFFFFFF)
-val BlueBackgroundDark = Color(0xFF121212)
-
-
-
-val RedError = Color(0xFFF44336)
+// Status (Útil para o seu Quiz)
+val RedError = Color(0xFFB00020)
+val GreenSuccess = Color(0xFF4CAF50)

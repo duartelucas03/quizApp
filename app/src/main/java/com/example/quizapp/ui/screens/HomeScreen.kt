@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun HomeScreen(
     onQuizClick: (String) -> Unit,
-    onStatsClick: () -> Unit,
+    onRankingClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -35,24 +35,25 @@ fun HomeScreen(
             NavigationBar(
                 containerColor = Color.White,
                 modifier = Modifier.fillMaxWidth().height(70.dp)
+
             ) {
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
-                    icon = { Icon(painterResource(R.drawable.bottom_btn1), contentDescription = null) },
-                    label = { Text("Início") }
+                    icon = { Icon(painterResource(R.drawable.bottom_btn1), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Início", color = Color.Black) }
                 )
                 NavigationBarItem(
                     selected = false,
-                    onClick = onStatsClick,
-                    icon = { Icon(painterResource(R.drawable.bottom_btn2), contentDescription = null) },
-                    label = { Text("Ranking") }
+                    onClick = onRankingClick,
+                    icon = { Icon(painterResource(R.drawable.bottom_btn2), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Ranking", color = Color.Black) }
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onProfileClick,
-                    icon = { Icon(painterResource(R.drawable.bottom_btn4), contentDescription = null) },
-                    label = { Text("Perfil") }
+                    icon = { Icon(painterResource(R.drawable.bottom_btn4), contentDescription = null, tint = Color.Black) },
+                    label = { Text("Perfil", color = Color.Black) }
                 )
             }
         }
@@ -74,7 +75,8 @@ fun HomeScreen(
                 text = "Quizes disponíveis:",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
 
 
@@ -102,7 +104,8 @@ fun TopUserSection(userName: String) {
         Text(
             text = "Olá, $userName",
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            color = Color.Black
         )
     }
 }
@@ -123,7 +126,7 @@ fun QuizList(onQuizClick: (String) -> Unit) {
                 difficulty = quiz.difficulty,
                 questions = quiz.questionCount,
                 accentColor = quiz.color,
-                onClick = { onQuizClick(quiz.title) }
+                onClick = { onQuizClick(quiz.id.toString()) }
             )
         }
     }
@@ -194,7 +197,7 @@ fun HomeScreenPreview() {
     QuizAppTheme {
         HomeScreen(
             onQuizClick = {},
-            onStatsClick = {},
+            onRankingClick = {},
             onProfileClick = {}
         )
     }

@@ -1,6 +1,13 @@
 package com.example.quizapp.models
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+
+data class Question(
+    val text: String,
+    val options: List<String>,
+    val correctAnswerIndex: Int
+)
 
 data class QuizCategory(
     val id: Int,
@@ -8,5 +15,6 @@ data class QuizCategory(
     val icon: ImageVector,
     val questionCount: Int,
     val difficulty: String,
-    val color: androidx.compose.ui.graphics.Color
+    val color: Color,
+    val questions: List<Question> = emptyList()
 )
