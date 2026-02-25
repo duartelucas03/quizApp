@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,14 +23,18 @@ import com.example.quizapp.R
 import com.example.quizapp.data.SampleData
 import com.example.quizapp.ui.theme.QuizAppTheme
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.quizapp.ui.viewmodel.UserViewModel
 
 @Composable
 fun HomeScreen(
     onQuizClick: (String) -> Unit,
     onRankingClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    viewModel: UserViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val userName by viewModel.userName.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -66,7 +72,7 @@ fun HomeScreen(
                 .verticalScroll(scrollState)
         ) {
 
-            TopUserSection(userName = "Pedro")
+            TopUserSection(userName = userName)
 
             Spacer(modifier = Modifier.height(16.dp))
 

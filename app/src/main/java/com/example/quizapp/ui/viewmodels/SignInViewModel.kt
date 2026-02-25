@@ -1,25 +1,34 @@
 package com.example.quizapp.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.quizapp.data.FirebaseAuthRepository
 import com.example.quizapp.ui.state.SignInUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class SignInViewModel : ViewModel() {
+class SignInViewModel(
+    private val repository: FirebaseAuthRepository = FirebaseAuthRepository()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
 
+    // Estado para a navegação saber que o login funcionou
+    private val _signInIsSuccessful = MutableStateFlow(false)
+    val signInIsSuccessful: StateFlow<Boolean> = _signInIsSuccessful.asStateFlow()
+
     init {
         _uiState.update { currentState ->
             currentState.copy(
-                onUserChange = { newUser ->
-                    _uiState.update { it.copy(user = newUser, errorMessage = null) }
+                onUserChange = { user ->
+                    _uiState.update { it.copy(user = user) }
                 },
-                onPasswordChange = { newPassword ->
-                    _uiState.update { it.copy(password = newPassword, errorMessage = null) }
+                onPasswordChange = { pwd ->
+                    _uiState.update { it.copy(password = pwd) }
                 },
                 onTogglePasswordVisibility = {
                     _uiState.update { it.copy(isShowPassword = !it.isShowPassword) }
@@ -28,35 +37,29 @@ class SignInViewModel : ViewModel() {
         }
     }
 
-    // Função que seu SignInNavigation.kt chama no onSignInClick
-    fun authenticate() {
-        if (validateLogin()) {
-            val current = _uiState.value
-
-            // Lógica de usuários fixos para teste
-            val isAuthorized = (current.user == "admin" && current.password == "123456") ||
-                    (current.user == "aluno@ufu.br" && current.password == "654321")
-
-            if (isAuthorized) {
-                _uiState.update { it.copy(isAuthenticated = true, errorMessage = null) }
-            } else {
-                _uiState.update { it.copy(isAuthenticated = false, errorMessage = "Usuário ou senha incorretos") }
-            }
-        }
-    }
-
-    private fun validateLogin(): Boolean {
+    fun signIn() {
         val current = _uiState.value
-        return when {
-            current.user.isBlank() -> {
-                _uiState.update { it.copy(errorMessage = "O usuário não pode estar vazio") }
-                false
+
+        // Validação simples antes de chamar o Firebase
+        if (current.user.isBlank() || current.password.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Preencha usuário e senha") }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                // Limpa erro anterior
+                _uiState.update { it.copy(errorMessage = null) }
+
+                // No Firebase, o "user" aqui deve ser o e-mail
+                repository.signIn(current.user, current.password)
+
+                // Notifica sucesso
+                _signInIsSuccessful.value = true
+            } catch (e: Exception) {
+                // Atualiza o erro para aparecer na tela
+                _uiState.update { it.copy(errorMessage = "Erro ao entrar: ${e.localizedMessage}") }
             }
-            current.password.length < 6 -> {
-                _uiState.update { it.copy(errorMessage = "A senha deve ter pelo menos 6 caracteres") }
-                false
-            }
-            else -> true
         }
     }
 }

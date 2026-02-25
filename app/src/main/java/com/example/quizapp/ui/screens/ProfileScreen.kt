@@ -24,17 +24,18 @@ import androidx.compose.ui.unit.sp
 import com.example.quizapp.R
 import com.example.quizapp.ui.theme.QuizAppTheme
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.quizapp.ui.viewmodel.UserViewModel
 
 @Composable
 fun ProfileScreen(
-    userName: String = "Pedro",
-    viewModel: UserViewModel,
+    viewModel: UserViewModel = viewModel(),
     onHomeClick: () -> Unit,
     onRankingClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val userName2 by viewModel.userName.collectAsState()
 
     val history by viewModel.history.collectAsState()
     val totalQuizzes by viewModel.totalQuizzes.collectAsState()
@@ -129,7 +130,7 @@ fun ProfileScreen(
                         fontSize = 14.sp
                     )
                     Text(
-                        userName,
+                        text = userName2,
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -241,8 +242,6 @@ fun HistoryRow(entry: HistoryEntry) {
 fun ProfileScreenPreview() {
     QuizAppTheme {
         ProfileScreen(
-            userName = "Pedro",
-            viewModel = UserViewModel(),
             onHomeClick = {},
             onRankingClick = {},
             onLogoutClick = {}

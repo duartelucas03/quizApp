@@ -42,6 +42,7 @@ fun QuizNavHost(navController: NavHostController) {
         // Configuração da tela de Login
         signInScreen(
             onNavigateToHome = {
+                userViewModel.fetchUserData()
                 navController.navigate(homeRoute) {
                     popUpTo(signInRoute) { inclusive = true }
                 }
@@ -61,22 +62,27 @@ fun QuizNavHost(navController: NavHostController) {
         // Configuração da Home
         homeScreen(
             onNavigateToRanking = {
+                userViewModel.fetchUserData()
                 navController.navigate(rankingRoute)
             },
             onNavigateToProfile = {
+                userViewModel.fetchUserData()
                 navController.navigate(statsRoute)
             },
             onNavigateToQuiz = { quizId ->
                 navController.navigate("quiz_screen/$quizId")
-            }
+            },
+            viewModel = userViewModel
         )
 
         // Configuração do Ranking
         rankingScreen(
             onNavigateToHome = {
+                userViewModel.fetchUserData()
                 navController.navigate(homeRoute)
             },
             onNavigateToProfile = {
+                userViewModel.fetchUserData()
                 navController.navigate(statsRoute) {
                     launchSingleTop = true
                     restoreState = true
@@ -90,12 +96,15 @@ fun QuizNavHost(navController: NavHostController) {
                 navController.navigate(signInRoute) {
                     // Limpa todo o histórico de navegação ao deslogar
                     popUpTo(0)
+                    userViewModel.fetchUserData()
                 }
             },
             onHomeClick = {
+                userViewModel.fetchUserData()
                 navController.navigate(homeRoute)
             },
             onRankingClick = {
+                userViewModel.fetchUserData()
                 navController.navigate(rankingRoute)
             },
             viewModel = userViewModel

@@ -18,13 +18,14 @@ fun NavGraphBuilder.signInScreen(
     onNavigateToSignUp: () -> Unit
 ) {
     composable(signInRoute) {
-        // Instanciando o ViewModel sem Koin usando o provider padrão do Android
         val viewModel: SignInViewModel = viewModel()
-
         val uiState by viewModel.uiState.collectAsState()
 
-        LaunchedEffect(uiState.isAuthenticated) {
-            if (uiState.isAuthenticated) {
+        // Alteração: Observar o estado de sucesso específico, igual ao SignUp
+        val signInIsSuccessful by viewModel.signInIsSuccessful.collectAsState()
+
+        LaunchedEffect(signInIsSuccessful) {
+            if (signInIsSuccessful) {
                 onNavigateToHome()
             }
         }
@@ -32,15 +33,10 @@ fun NavGraphBuilder.signInScreen(
         SignInScreen(
             uiState = uiState,
             onSignInClick = {
-                viewModel.authenticate()
+                // Alteração: Chamar o novo método que criamos no passo anterior
+                viewModel.signIn()
             },
             onSignUpClick = onNavigateToSignUp
         )
     }
-}
-
-fun NavHostController.navigateToSignIn(
-    navOptions: NavOptions? = null
-) {
-    navigate(signInRoute, navOptions)
 }

@@ -14,16 +14,15 @@ import kotlinx.coroutines.launch
 
 const val signUpRoute = "signUp"
 
+// ... imports ...
+
 fun NavGraphBuilder.signUpScreen(
     onNavigationToSignIn: () -> Unit
 ){
     composable(signUpRoute){
-        // Substituído koinViewModel por viewModel()
         val viewModel: SignUpViewModel = viewModel()
-
         val uiState by viewModel.uiState.collectAsState()
-        val scope = rememberCoroutineScope()
-        val signUpIsSuccessful by viewModel.signUpIsSuccessful.collectAsState(false)
+        val signUpIsSuccessful by viewModel.signUpIsSuccessful.collectAsState()
 
         LaunchedEffect(signUpIsSuccessful) {
             if(signUpIsSuccessful) {
@@ -34,14 +33,12 @@ fun NavGraphBuilder.signUpScreen(
         SignUpScreen(
             uiState = uiState,
             onSignUpClick = {
-                scope.launch {
-                    viewModel.signUp()
-                }
+                viewModel.signUp()
             }
         )
+
     }
 }
-
 fun NavHostController.navigateToSignUp() {
     navigate(signUpRoute)
 }
