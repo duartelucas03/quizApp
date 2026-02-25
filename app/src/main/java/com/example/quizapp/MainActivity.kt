@@ -133,10 +133,12 @@ fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) 
                         quizTitle = quiz?.title ?: "Quiz",
                         score = score,
                         totalQuestions = quiz?.questionCount ?: 0,
-                        time = timeFormatted,
-                        color = quiz?.color ?: Color.Gray
+                        time = timeFormatted
+
                     )
-                    navController.navigate(statsRoute)
+                    navController.navigate(statsRoute){
+                        popUpTo("quiz_screen/$id") { inclusive = true }
+                    }
                 }
             )
         }

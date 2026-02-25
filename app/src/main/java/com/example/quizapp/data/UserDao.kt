@@ -10,4 +10,14 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProfile(profile: UserProfileEntity)
+
+    @Query("SELECT * FROM user_profile WHERE uid = :uid")
+    fun getProfile(uid: String): Flow<UserProfileEntity?>
+
+    @Insert
+    suspend fun insertHistory(history: QuizHistoryEntity)
+
+    @Query("SELECT * FROM quiz_history WHERE userId = :userId ORDER BY timestamp DESC")
+    fun getHistoryByUser(userId: String): Flow<List<QuizHistoryEntity>>
+
 }

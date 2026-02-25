@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quizapp.data.FirebaseAuthRepository
+import com.example.quizapp.data.QuizHistoryEntity
 import com.example.quizapp.data.UserDao
 import com.example.quizapp.data.UserProfileEntity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,39 +12,70 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.example.quizapp.ui.screens.HistoryEntry
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 
 class UserViewModel(
-    // Injetando o repositório para acessar o usuário logado
     private val repository: FirebaseAuthRepository = FirebaseAuthRepository(),
     private val userDao: UserDao
 ) : ViewModel() {
 
-    private val _userName = MutableStateFlow("Usuário")
-    val userName: StateFlow<String> = _userName.asStateFlow()
+    // 1. O fluxo principal que controla quem está logado
+    private val userFlow = MutableStateFlow(repository.getCurrentUser())
+
+    // 2. Nome do usuário (Derivado do Perfil do Room)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userName: StateFlow<String> = userFlow.flatMapLatest { user ->
+        if (user != null) {
+            userDao.getProfile(user.uid).map { it?.name ?: user.displayName ?: "Usuário" }
+        } else flowOf("Usuário")
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Usuário")
+
+    // 3. Fluxo 1: Dados acumulados do Perfil (Conectado ao Room)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userProfile: StateFlow<UserProfileEntity?> = userFlow.flatMapLatest { user ->
+        if (user != null) userDao.getProfile(user.uid)
+        else flowOf(null)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // 4. Fluxo 2: Lista de Histórico Individual (Conectado ao Room)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val quizHistory: StateFlow<List<QuizHistoryEntity>> = userFlow.flatMapLatest { user ->
+        if (user != null) userDao.getHistoryByUser(user.uid)
+        else flowOf(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         fetchUserData()
     }
+
     fun fetchUserData() {
         val firebaseUser = repository.getCurrentUser()
+        userFlow.value = firebaseUser // Isso "acorda" todos os fluxos acima
+
         firebaseUser?.let { user ->
             viewModelScope.launch {
-
-                val localProfile = userDao.getUserById(user.uid).firstOrNull()
-                localProfile?.let {
-                    _userName.value = it.name
-                }
                 user.reload().addOnSuccessListener {
                     val remoteName = user.displayName ?: "Usuário"
-
-                    if (_userName.value != remoteName) {
-                        _userName.value = remoteName
-
-                        viewModelScope.launch {
+                    viewModelScope.launch {
+                        // Sincroniza o Perfil básico no Room
+                        val current = userDao.getProfile(user.uid).firstOrNull()
+                        if (current == null || current.name != remoteName) {
                             userDao.insertProfile(
-                                UserProfileEntity(user.uid, remoteName, user.email ?: "")
+                                UserProfileEntity(
+                                    uid = user.uid,
+                                    name = remoteName,
+                                    email = user.email ?: "",
+                                    totalQuizzes = current?.totalQuizzes ?: 0,
+                                    totalPoints = current?.totalPoints ?: 0,
+                                    totalQuestions = current?.totalQuestions ?: 0
+                                )
                             )
                         }
                     }
@@ -52,37 +84,31 @@ class UserViewModel(
         }
     }
 
-    fun refreshUserData() {
-        val user = repository.getCurrentUser()
-        user?.reload()?.addOnSuccessListener {
-            val updatedUser = repository.getCurrentUser()
-            _userName.value = updatedUser?.displayName ?: "Visitante"
+    fun addQuizResult(quizTitle: String, score: Int, totalQuestions: Int, time: String) {
+        val uid = repository.getCurrentUser()?.uid ?: return
+
+        viewModelScope.launch {
+            // 1. Salva o histórico individual
+            userDao.insertHistory(
+                QuizHistoryEntity(
+                    userId = uid,
+                    quizTitle = quizTitle,
+                    score = "$score/${totalQuestions * 10}",
+                    timeSpent = time,
+                )
+            )
+
+            // 2. Atualiza o acumulado (Perfil) para o BI
+            val currentProfile = userDao.getProfile(uid).firstOrNull()
+                ?: UserProfileEntity(uid, "Usuário", "")
+
+            val updatedProfile = currentProfile.copy(
+                totalQuizzes = currentProfile.totalQuizzes + 1,
+                totalPoints = currentProfile.totalPoints + score,
+                totalQuestions = currentProfile.totalQuestions + totalQuestions
+            )
+
+            userDao.insertProfile(updatedProfile)
         }
-    }
-    private val _totalQuestions = MutableStateFlow(0)
-    val totalQuestions: StateFlow<Int> = _totalQuestions.asStateFlow()
-    private val _totalQuizzes = MutableStateFlow(0)
-    val totalQuizzes: StateFlow<Int> = _totalQuizzes.asStateFlow()
-
-    private val _totalPoints = MutableStateFlow(0)
-    val totalPoints: StateFlow<Int> = _totalPoints.asStateFlow()
-
-    private val _history = MutableStateFlow<List<HistoryEntry>>(emptyList())
-    val history: StateFlow<List<HistoryEntry>> = _history.asStateFlow()
-
-    fun addQuizResult(quizTitle: String, score: Int, totalQuestions: Int, time: String, color: Color) {
-        _totalQuizzes.value += 1
-        _totalPoints.value += score
-        _totalQuestions.value += totalQuestions
-
-        val maxPoints = totalQuestions * 10
-
-        val newEntry = HistoryEntry(
-            title = quizTitle,
-            score = "$score/$maxPoints",
-            timeSpent = time,
-            color = color
-        )
-        _history.update { currentList -> listOf(newEntry) + currentList }
     }
 }

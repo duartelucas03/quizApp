@@ -37,10 +37,8 @@ fun ProfileScreen(
     val scrollState = rememberScrollState()
     val userName2 by viewModel.userName.collectAsState()
 
-    val history by viewModel.history.collectAsState()
-    val totalQuizzes by viewModel.totalQuizzes.collectAsState()
-    val totalPoints by viewModel.totalPoints.collectAsState()
-    val totalQuestions by viewModel.totalQuestions.collectAsState()
+    val profile by viewModel.userProfile.collectAsState()
+    val historyList by viewModel.quizHistory.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -147,12 +145,13 @@ fun ProfileScreen(
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        val mediaCalculada = if (totalQuestions > 0) (totalPoints.toFloat() / (totalQuestions * 10)) * 100 else 0f
-                        val mediaFormatada = "%.2f".format(mediaCalculada)
+                        val media = if ((profile?.totalQuestions ?: 0) > 0) {
+                            (profile!!.totalPoints.toFloat() / (profile!!.totalQuestions * 10)) * 100
+                        } else 0f
 
-                        StatItem("Quizes jogados", totalQuizzes.toString())
-                        StatItem("Média", mediaFormatada + "%")
-                        StatItem("Pontos", totalPoints.toString())
+                        StatItem("Quizes jogados", (profile?.totalQuizzes ?: 0).toString())
+                        StatItem("Média", "%.2f%%".format(media))
+                        StatItem("Pontos", (profile?.totalPoints ?: 0).toString())
                     }
                 }
             }
@@ -175,11 +174,17 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Mock de Histórico - No futuro virá do seu banco SQL
-                if (history.isEmpty()) {
+                if (historyList.isEmpty()) {
                     Text("Nenhum quiz realizado", modifier = Modifier.padding(16.dp), color = Color.Gray)
                 } else {
-                    history.forEach { entry ->
-                        HistoryRow(entry)
+                    historyList.forEach { entity ->
+                        HistoryRow(
+                            entry = HistoryEntry(
+                            title = entity.quizTitle,
+                            score = entity.score,
+                            timeSpent = entity.timeSpent,
+                                color = Color(0xFF1A237E)
+                        ))
                     }
                 }
             }
