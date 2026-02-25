@@ -6,34 +6,46 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.quizapp.data.AppDatabase
 import com.example.quizapp.data.SampleData
 import com.example.quizapp.ui.navigation.* // Importa suas rotas (signIn, signUp, etc)
 import com.example.quizapp.ui.screens.QuizScreen
 import com.example.quizapp.ui.theme.QuizAppTheme
 import com.example.quizapp.ui.viewmodel.UserViewModel
+import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val database = AppDatabase.getDatabase(this)
+        val userDao = database.userDao()
         enableEdgeToEdge()
         setContent {
             QuizAppTheme {
                 val navController = rememberNavController()
-                QuizNavHost(navController = navController)
+                val userViewModel: UserViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return UserViewModel(userDao = userDao) as T
+                        }
+                    }
+                )
+
+                QuizNavHost(navController = navController, userViewModel = userViewModel)
             }
         }
     }
 }
 
 @Composable
-fun QuizNavHost(navController: NavHostController) {
+fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) {
 
-    val userViewModel: UserViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -94,7 +106,6 @@ fun QuizNavHost(navController: NavHostController) {
         profileScreen(
             onLogout = {
                 navController.navigate(signInRoute) {
-                    // Limpa todo o histórico de navegação ao deslogar
                     popUpTo(0)
                     userViewModel.fetchUserData()
                 }

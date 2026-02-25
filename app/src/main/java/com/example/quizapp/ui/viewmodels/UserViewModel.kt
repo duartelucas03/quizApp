@@ -2,19 +2,24 @@ package com.example.quizapp.ui.viewmodel
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.quizapp.data.FirebaseAuthRepository
+import com.example.quizapp.data.UserDao
+import com.example.quizapp.data.UserProfileEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.example.quizapp.ui.screens.HistoryEntry
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class UserViewModel(
     // Injetando o repositório para acessar o usuário logado
-    private val repository: FirebaseAuthRepository = FirebaseAuthRepository()
+    private val repository: FirebaseAuthRepository = FirebaseAuthRepository(),
+    private val userDao: UserDao
 ) : ViewModel() {
 
-    // Novo estado para o nome do usuário
     private val _userName = MutableStateFlow("Usuário")
     val userName: StateFlow<String> = _userName.asStateFlow()
 
@@ -22,15 +27,26 @@ class UserViewModel(
         fetchUserData()
     }
     fun fetchUserData() {
-        val user = repository.getCurrentUser()
+        val firebaseUser = repository.getCurrentUser()
+        firebaseUser?.let { user ->
+            viewModelScope.launch {
 
-        // Força o Firebase a buscar os dados mais recentes do servidor
-        user?.reload()?.addOnSuccessListener {
-            // Após o reload, pegamos a instância atualizada do usuário
-            val updatedUser = repository.getCurrentUser()
-            updatedUser?.displayName?.let { name ->
-                if (name.isNotBlank()) {
-                    _userName.value = name
+                val localProfile = userDao.getUserById(user.uid).firstOrNull()
+                localProfile?.let {
+                    _userName.value = it.name
+                }
+                user.reload().addOnSuccessListener {
+                    val remoteName = user.displayName ?: "Usuário"
+
+                    if (_userName.value != remoteName) {
+                        _userName.value = remoteName
+
+                        viewModelScope.launch {
+                            userDao.insertProfile(
+                                UserProfileEntity(user.uid, remoteName, user.email ?: "")
+                            )
+                        }
+                    }
                 }
             }
         }
