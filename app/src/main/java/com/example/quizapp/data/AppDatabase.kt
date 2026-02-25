@@ -5,9 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [UserProfileEntity::class, QuizHistoryEntity::class], version = 2)
+// Registro de todas as entidades para evitar o erro "no such table"
+@Database(
+    entities = [UserProfileEntity::class, Question::class, QuizHistoryEntity::class],
+    version = 1,
+    exportSchema = false // Remove o aviso amarelo de exportação de schema
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
+    abstract fun questionDao(): QuestionDao // Resolve o erro da MainActivity
 
     companion object {
         @Volatile
@@ -19,9 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "quiz_database"
-                )
-                .fallbackToDestructiveMigration()
-                .build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

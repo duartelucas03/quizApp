@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.googleServices)
-    alias(libs.plugins.ksp)
+    id("kotlin-kapt")
 
 }
 
@@ -67,7 +67,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
+
     implementation(libs.androidx.room.ktx)
 
     // ViewModel e LiveData (O coração do MVVM)
@@ -82,4 +82,12 @@ dependencies {
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // Resolve o erro do .await() no seu QuizRepository
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 }
+

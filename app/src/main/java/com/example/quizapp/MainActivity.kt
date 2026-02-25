@@ -5,26 +5,38 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.collectAsState // Importante para observar o perfil
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.quizapp.data.AppDatabase
+import com.example.quizapp.data.QuizRepository
 import com.example.quizapp.data.SampleData
-import com.example.quizapp.ui.navigation.* // Importa suas rotas (signIn, signUp, etc)
-import com.example.quizapp.ui.screens.QuizScreen
+import com.example.quizapp.ui.navigation.* import com.example.quizapp.ui.screens.QuizScreen
 import com.example.quizapp.ui.theme.QuizAppTheme
 import com.example.quizapp.ui.viewmodel.UserViewModel
-import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.auth.FirebaseAuth // Adicionado para o nome de fallback
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val database = AppDatabase.getDatabase(this)
         val userDao = database.userDao()
+        val questionDao = database.questionDao()
+        val quizRepository = QuizRepository(questionDao)
+
+        // Sincroniza questões para modo offline
+        lifecycleScope.launch {
+            quizRepository.syncQuestions()
+        }
+
         enableEdgeToEdge()
         setContent {
             QuizAppTheme {
@@ -32,26 +44,35 @@ class MainActivity : ComponentActivity() {
                 val userViewModel: UserViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            @Suppress("UNCHECKED_CAST")
                             return UserViewModel(userDao = userDao) as T
                         }
                     }
                 )
 
-                QuizNavHost(navController = navController, userViewModel = userViewModel)
+                QuizNavHost(
+                    navController = navController,
+                    userViewModel = userViewModel,
+                    quizRepository = quizRepository
+                )
             }
         }
     }
 }
 
 @Composable
-fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) {
-
+fun QuizNavHost(
+    navController: NavHostController,
+    userViewModel: UserViewModel,
+    quizRepository: QuizRepository
+) {
+    // Observamos o perfil para garantir que ele esteja sempre atualizado na UI
+    val userProfile = userViewModel.userProfile.collectAsState()
 
     NavHost(
         navController = navController,
         startDestination = signInRoute
     ) {
-        // Configuração da tela de Login
         signInScreen(
             onNavigateToHome = {
                 userViewModel.fetchUserData()
@@ -59,19 +80,11 @@ fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) 
                     popUpTo(signInRoute) { inclusive = true }
                 }
             },
-            onNavigateToSignUp = {
-                navController.navigateToSignUp()
-            }
+            onNavigateToSignUp = { navController.navigateToSignUp() }
         )
 
-        // Configuração da tela de Cadastro
-        signUpScreen(
-            onNavigationToSignIn = {
-                navController.popBackStack()
-            }
-        )
+        signUpScreen(onNavigationToSignIn = { navController.popBackStack() })
 
-        // Configuração da Home
         homeScreen(
             onNavigateToRanking = {
                 userViewModel.fetchUserData()
@@ -87,7 +100,6 @@ fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) 
             viewModel = userViewModel
         )
 
-        // Configuração do Ranking
         rankingScreen(
             onNavigateToHome = {
                 userViewModel.fetchUserData()
@@ -95,48 +107,46 @@ fun QuizNavHost(navController: NavHostController, userViewModel: UserViewModel) 
             },
             onNavigateToProfile = {
                 userViewModel.fetchUserData()
-                navController.navigate(statsRoute) {
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate(statsRoute)
             }
         )
 
-        // Perfil / Estatísticas (Onde incluímos o botão vermelho de Sair)
         profileScreen(
             onLogout = {
-                navController.navigate(signInRoute) {
-                    popUpTo(0)
-                    userViewModel.fetchUserData()
-                }
+                navController.navigate(signInRoute) { popUpTo(0) }
             },
-            onHomeClick = {
-                userViewModel.fetchUserData()
-                navController.navigate(homeRoute)
-            },
-            onRankingClick = {
-                userViewModel.fetchUserData()
-                navController.navigate(rankingRoute)
-            },
+            onHomeClick = { navController.navigate(homeRoute) },
+            onRankingClick = { navController.navigate(rankingRoute) },
             viewModel = userViewModel
         )
 
-
-        // Rota que aceita um argumento (o nome do quiz)
         composable("quiz_screen/{quizId}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("quizId") ?: ""
             QuizScreen(
                 quizId = id,
                 onQuizFinished = { score, timeFormatted ->
                     val quiz = SampleData.quizCategories.find { it.id.toString() == id }
+
+                    // --- SOLUÇÃO PARA O NOME "JOGADOR" ---
+                    // 1. Tenta pegar do Room. 2. Se falhar, tenta o nome do Firebase. 3. Se falhar, usa o email.
+                    val firebaseUser = FirebaseAuth.getInstance().currentUser
+                    val userName = userProfile.value?.name
+                        ?: firebaseUser?.displayName
+                        ?: firebaseUser?.email?.substringBefore("@")
+                        ?: "Usuario"
+
+                    // Salva no histórico local (Room)
                     userViewModel.addQuizResult(
                         quizTitle = quiz?.title ?: "Quiz",
                         score = score,
                         totalQuestions = quiz?.questionCount ?: 0,
                         time = timeFormatted
-
                     )
-                    navController.navigate(statsRoute){
+
+                    // Envia para o Ranking (Firebase) somando os pontos
+                    quizRepository.saveRanking(userName, score)
+
+                    navController.navigate(statsRoute) {
                         popUpTo("quiz_screen/$id") { inclusive = true }
                     }
                 }
