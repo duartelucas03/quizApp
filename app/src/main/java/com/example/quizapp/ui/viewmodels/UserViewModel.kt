@@ -84,21 +84,27 @@ class UserViewModel(
         }
     }
 
+    /** GEMINI - início
+     * Prompt: Implmentei os resultados para serem salvos localmente no room. Como fazer o mesmo
+     * para ser salvo no firebase database?
+     */
+
+
     fun addQuizResult(quizTitle: String, score: Int, totalQuestions: Int, time: String) {
         val uid = repository.getCurrentUser()?.uid ?: return
 
         viewModelScope.launch {
-            // 1. Salva o histórico individual
-            userDao.insertHistory(
-                QuizHistoryEntity(
-                    userId = uid,
-                    quizTitle = quizTitle,
-                    score = "$score/${totalQuestions * 10}",
-                    timeSpent = time,
-                )
+
+            val newEntry = QuizHistoryEntity(
+                userId = uid,
+                quizTitle = quizTitle,
+                score = "$score/${totalQuestions * 10}",
+                timeSpent = time,
             )
 
-            // 2. Atualiza o acumulado (Perfil) para o BI
+
+            userDao.insertHistory(newEntry)
+
             val currentProfile = userDao.getProfile(uid).firstOrNull()
                 ?: UserProfileEntity(uid, "Usuário", "")
 
@@ -107,8 +113,26 @@ class UserViewModel(
                 totalPoints = currentProfile.totalPoints + score,
                 totalQuestions = currentProfile.totalQuestions + totalQuestions
             )
-
             userDao.insertProfile(updatedProfile)
+
+
+            val userCloudData = hashMapOf(
+                "name" to updatedProfile.name,
+                "totalQuizzes" to updatedProfile.totalQuizzes,
+                "totalPoints" to updatedProfile.totalPoints,
+                "totalQuestions" to updatedProfile.totalQuestions,
+                "lastUpdate" to System.currentTimeMillis()
+            )
+            repository.saveToFirestore("users/$uid", userCloudData)
+
+            val historyCloudData = hashMapOf(
+                "quizTitle" to newEntry.quizTitle,
+                "score" to newEntry.score,
+                "timeSpent" to newEntry.timeSpent,
+                "timestamp" to newEntry.timestamp
+            )
+            repository.saveToFirestore("users/$uid/history", historyCloudData)
         }
     }
+    /** GEMINI - final */
 }
