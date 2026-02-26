@@ -48,7 +48,7 @@ Para testar o aplicativo diretamente no seu dispositivo Android sem precisar con
 2.  Faça o download do arquivo `release/app-release.apk`.
 3.  Transfira o arquivo para o seu smartphone.
 4.  Habilite a instalação de fontes desconhecidas nas configurações do Android e instale o app.
-
+5.  Se o quiz não carregar de primeira, encerre o app e abra de novo.
 
 ---
 
