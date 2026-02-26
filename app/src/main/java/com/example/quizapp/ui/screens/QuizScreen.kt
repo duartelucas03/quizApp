@@ -11,7 +11,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.quizapp.data.QuestionDao
-import com.example.quizapp.data.SampleData
 
 @Composable
 fun QuizScreen(
@@ -20,18 +19,31 @@ fun QuizScreen(
     onQuizFinished: (Int, String) -> Unit
 ) {
     val startTime = remember { System.currentTimeMillis() }
-    val quizData = remember(quizId) {
-        SampleData.quizCategories.find { it.id.toString() == quizId }
+
+    // 1. Coleta todas as questões do Room como um estado do Compose
+    val allQuestions by questionDao.getAll().collectAsState(initial = emptyList())
+
+    // 2. Filtra as questões localmente para o quiz atual
+    // Usamos o quizId para filtrar (ex: se o id for '1', pegamos questões 'sql_1', 'sql_2'...)
+    val quizQuestions = remember(allQuestions, quizId) {
+        val prefix = when(quizId) {
+            "1" -> "sql"
+            "2" -> "py"
+            "3" -> "eng"
+            "4" -> "qual"
+            else -> ""
+        }
+        allQuestions.filter { it.id.startsWith(prefix) }
     }
 
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var score by remember { mutableIntStateOf(0) }
 
-    val currentQuestion = quizData?.questions?.getOrNull(currentQuestionIndex)
-    val totalQuestions = quizData?.questions?.size ?: 0
+    // 3. Referência para a pergunta atual baseada na lista do Room
+    val currentQuestion = quizQuestions.getOrNull(currentQuestionIndex)
+    val totalQuestions = quizQuestions.size
     val progress = if (totalQuestions > 0) (currentQuestionIndex + 1).toFloat() / totalQuestions else 0f
 
-    // --- SOLUÇÃO PARA O ERRO: Transformamos os campos individuais em uma lista ---
     val options = remember(currentQuestion) {
         if (currentQuestion != null) {
             listOf(
@@ -65,37 +77,41 @@ fun QuizScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = currentQuestion?.text ?: "Fim das perguntas",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            if (quizQuestions.isEmpty()) {
+                // Caso o banco ainda esteja sincronizando ou esteja vazio
+                CircularProgressIndicator()
+                Text("Carregando questões do banco local...", modifier = Modifier.padding(top = 16.dp))
+            } else {
+                Text(
+                    text = currentQuestion?.text ?: "Fim das perguntas",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            // Usamos a nossa nova lista 'options' aqui
-            options.forEachIndexed { index, option ->
-                Button(
-                    onClick = {
-                        // Comparamos com 'answer' (o novo nome do campo)
-                        if (index == currentQuestion?.answer) {
-                            score += 10
-                        }
+                options.forEachIndexed { index, option ->
+                    Button(
+                        onClick = {
+                            if (index == currentQuestion?.answer) {
+                                score += 10
+                            }
 
-                        if (currentQuestionIndex < totalQuestions - 1) {
-                            currentQuestionIndex++
-                        } else {
-                            val endTime = System.currentTimeMillis()
-                            val seconds = (endTime - startTime) / 1000
-                            val minutes = seconds / 60
-                            val formattedTime = "%02d:%02d".format(minutes, seconds % 60)
-                            onQuizFinished(score, formattedTime)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(text = option)
+                            if (currentQuestionIndex < totalQuestions - 1) {
+                                currentQuestionIndex++
+                            } else {
+                                val endTime = System.currentTimeMillis()
+                                val seconds = (endTime - startTime) / 1000
+                                val minutes = seconds / 60
+                                val formattedTime = "%02d:%02d".format(minutes, seconds % 60)
+                                onQuizFinished(score, formattedTime)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = option)
+                    }
                 }
             }
         }

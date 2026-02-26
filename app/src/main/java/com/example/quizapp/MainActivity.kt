@@ -54,7 +54,8 @@ class MainActivity : ComponentActivity() {
                 QuizNavHost(
                     navController = navController,
                     userViewModel = userViewModel,
-                    quizRepository = quizRepository
+                    quizRepository = quizRepository,
+                    database = database
                 )
             }
         }
@@ -65,7 +66,8 @@ class MainActivity : ComponentActivity() {
 fun QuizNavHost(
     navController: NavHostController,
     userViewModel: UserViewModel,
-    quizRepository: QuizRepository
+    quizRepository: QuizRepository,
+    database: AppDatabase
 ) {
     // Observamos o perfil para garantir que ele esteja sempre atualizado na UI
     val userProfile = userViewModel.userProfile.collectAsState()
@@ -123,20 +125,15 @@ fun QuizNavHost(
 
         composable("quiz_screen/{quizId}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("quizId") ?: ""
+
             QuizScreen(
                 quizId = id,
+                questionDao = database.questionDao(),
                 onQuizFinished = { score, timeFormatted ->
                     val quiz = SampleData.quizCategories.find { it.id.toString() == id }
-
-                    // --- SOLUÇÃO PARA O NOME "JOGADOR" ---
-                    // 1. Tenta pegar do Room. 2. Se falhar, tenta o nome do Firebase. 3. Se falhar, usa o email.
                     val firebaseUser = FirebaseAuth.getInstance().currentUser
-                    val userName = userProfile.value?.name
-                        ?: firebaseUser?.displayName
-                        ?: firebaseUser?.email?.substringBefore("@")
-                        ?: "Usuario"
+                    val userName = userProfile.value?.name ?: firebaseUser?.displayName ?: "Usuario"
 
-                    // Salva no histórico local (Room)
                     userViewModel.addQuizResult(
                         quizTitle = quiz?.title ?: "Quiz",
                         score = score,
@@ -144,7 +141,6 @@ fun QuizNavHost(
                         time = timeFormatted
                     )
 
-                    // Envia para o Ranking (Firebase) somando os pontos
                     quizRepository.saveRanking(userName, score)
 
                     navController.navigate(statsRoute) {
@@ -153,5 +149,4 @@ fun QuizNavHost(
                 }
             )
         }
-    }
-}
+    }}
