@@ -25,8 +25,8 @@ import com.google.firebase.firestore.Query
 
 // 1. Modelo de dados idêntico ao que você salva no Firestore
 data class RankingEntry(
-    val user: String = "",
-    val score: Int = 0
+    val name: String = "",
+    val totalPoints: Int = 0
 )
 
 @Composable
@@ -45,8 +45,8 @@ fun RankingScreen(
 
     // 3. Escuta o Firebase em tempo real (Sincronização Offline/Online)
     LaunchedEffect(Unit) {
-        db.collection("ranking")
-            .orderBy("score", Query.Direction.DESCENDING) // Ordena pelos maiores pontos
+        db.collection("users")
+            .orderBy("totalPoints", Query.Direction.DESCENDING) // Ordena pelos maiores pontos
             .limit(10)
             .addSnapshotListener { snapshot, error ->
                 isLoading = false
@@ -135,10 +135,10 @@ fun RankingScreen(
                 ) {
                     itemsIndexed(leaderboardReal) { index, entry ->
                         // Verifica se o nome no Firebase bate com o seu nome atual
-                        val isMe = entry.user == currentUserName || (entry.user == "teste" && currentUserName == "teste")
-                        val displayName = if (isMe) "${entry.user} (Você)" else entry.user
+                        val isMe = entry.name == currentUserName || (entry.name == "teste" && currentUserName == "teste")
+                        val displayName = if (isMe) "${entry.name} (Você)" else entry.name
 
-                        RankingRow(rank = index + 1, name = displayName, score = entry.score, isCurrentUser = isMe)
+                        RankingRow(rank = index + 1, name = displayName, score = entry.totalPoints, isCurrentUser = isMe)
                     }
                 }
             }

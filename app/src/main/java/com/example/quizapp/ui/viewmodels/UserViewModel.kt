@@ -57,14 +57,15 @@ class UserViewModel(
 
     fun fetchUserData() {
         val firebaseUser = repository.getCurrentUser()
-        userFlow.value = firebaseUser // Isso "acorda" todos os fluxos acima
+        userFlow.value = firebaseUser
 
         firebaseUser?.let { user ->
             viewModelScope.launch {
                 user.reload().addOnSuccessListener {
                     val remoteName = user.displayName ?: "Usuário"
+
                     viewModelScope.launch {
-                        // Sincroniza o Perfil básico no Room
+                        // 1. Sincroniza o Perfil
                         val current = userDao.getProfile(user.uid).firstOrNull()
                         if (current == null || current.name != remoteName) {
                             userDao.insertProfile(
@@ -78,6 +79,31 @@ class UserViewModel(
                                 )
                             )
                         }
+
+                        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        db.collection("users").document(user.uid).collection("history")
+                            .get()
+                            .addOnSuccessListener { snapshot ->
+                                if (!snapshot.isEmpty) {
+                                    viewModelScope.launch {
+                                        val cloudHistory = snapshot.documents.map { doc ->
+                                            QuizHistoryEntity(
+                                                userId = user.uid,
+                                                quizTitle = doc.getString("quizTitle") ?: "",
+                                                score = doc.getString("score") ?: "",
+                                                timeSpent = doc.getString("timeSpent") ?: "",
+                                                timestamp = doc.getLong("timestamp") ?: 0L
+                                            )
+                                        }
+
+                                        userDao.clearHistoryByUser(user.uid)
+                                        userDao.insertAllHistory(cloudHistory)
+                                    }
+                                }
+                            }
+                            .addOnFailureListener {
+                                it.printStackTrace()
+                            }
                     }
                 }
             }

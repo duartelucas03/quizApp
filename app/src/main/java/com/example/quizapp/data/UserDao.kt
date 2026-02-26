@@ -20,4 +20,10 @@ interface UserDao {
     @Query("SELECT * FROM quiz_history WHERE userId = :userId ORDER BY timestamp DESC")
     fun getHistoryByUser(userId: String): Flow<List<QuizHistoryEntity>>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllHistory(history: List<QuizHistoryEntity>)
+
+    @Query("DELETE FROM quiz_history WHERE userId = :userId")
+    suspend fun clearHistoryByUser(userId: String)
+
 }

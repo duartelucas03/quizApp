@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
 // Registro de todas as entidades para evitar o erro "no such table"
 @Database(
     entities = [UserProfileEntity::class, Question::class, QuizHistoryEntity::class],
-    version = 1,
+    version = 3,
     exportSchema = false // Remove o aviso amarelo de exportação de schema
 )
 abstract class AppDatabase : RoomDatabase() {
