@@ -54,6 +54,10 @@ fun QuizScreen(
         } else emptyList()
     }
 
+    /** GEMINI - início
+     * Prompt: Preciso implementar um cronômetro e uma barra de progresso ao longo do quiz.
+     */
+
     Scaffold(
         topBar = {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp).safeDrawingPadding()) {
@@ -114,5 +118,6 @@ fun QuizScreen(
                 }
             }
         }
+        /** GEMINI - Final **/
     }
 }

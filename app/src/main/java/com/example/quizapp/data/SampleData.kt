@@ -8,6 +8,10 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.ui.graphics.Color
 import com.example.quizapp.models.QuizCategory
 import com.example.quizapp.data.Question
+
+/** GEMINI - início
+ * Prompt: Crie exemplos para teste com base no arquivo em anexo para os quizzes.
+ */
 object SampleData {
     val quizCategories = listOf(
         QuizCategory(
@@ -92,3 +96,5 @@ object SampleData {
         )
     )
 }
+
+/** GEMINI - Final **/

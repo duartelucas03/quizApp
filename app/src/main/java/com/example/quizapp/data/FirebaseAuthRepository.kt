@@ -35,19 +35,6 @@ class FirebaseAuthRepository(
      */
 
 
-    private val firestore = Firebase.firestore
-
-    fun saveUserProgress(profile: UserProfileEntity, history: List<QuizHistoryEntity>) {
-        val uid = profile.uid
-
-        firestore.collection("users").document(uid).set(profile)
-
-        val historyRef = firestore.collection("users").document(uid).collection("history")
-        history.forEach { entry ->
-            historyRef.document(entry.timestamp.toString()).set(entry)
-        }
-    }
-
     private val db = FirebaseFirestore.getInstance()
 
     fun saveToFirestore(path: String, data: Any) {
@@ -60,48 +47,6 @@ class FirebaseAuthRepository(
         }
     }
 
-    /** GEMINI - final */
-
-    suspend fun saveSingleQuizResult(history: QuizHistoryEntity, userDao: UserDao) {
-        val currentUser = firebaseAuth.currentUser ?: return
-        val uid = currentUser.uid
-
-        val historyToSave = history.copy(userId = uid)
-
-        userDao.insertHistory(historyToSave)
-
-        try {
-            firestore.collection("users")
-                .document(uid)
-                .collection("history")
-                .add(historyToSave)
-                .await()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    suspend fun syncUserHistory(userDao: UserDao) {
-        val currentUser = firebaseAuth.currentUser ?: return
-        val uid = currentUser.uid
-
-        try {
-            val snapshot = firestore.collection("users")
-                .document(uid)
-                .collection("history")
-                .get()
-                .await()
-
-            val historyList = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(QuizHistoryEntity::class.java)
-            }
-
-            if (historyList.isNotEmpty()) {
-                userDao.insertAllHistory(historyList)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
 }
+
+/** GEMINI - Final **/

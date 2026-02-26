@@ -9,6 +9,12 @@ class QuizRepository(
     private val questionDao: QuestionDao,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+
+    /** GEMINI - início
+     * Prompt: Implmentei os resultados para serem salvos localmente no room. Como fazer o mesmo
+     * para ser salvo no firebase database?
+     * Acrescente a sincronização para quando o usuário ficar online novamente
+     */
     suspend fun syncQuestions() {
         try {
             val snapshot = firestore.collection("questions").get().await()
@@ -68,3 +74,5 @@ class QuizRepository(
         }
     }
 }
+
+/** GEMINI - Final **/
