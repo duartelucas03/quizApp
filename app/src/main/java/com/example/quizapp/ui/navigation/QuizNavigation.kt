@@ -15,7 +15,7 @@ fun NavGraphBuilder.quizScreen(questionDao: QuestionDao, onFinished: (Int, Strin
     ) { backStackEntry ->
         val quizId = backStackEntry.arguments?.getString("quizId") ?: ""
 
-        // Agora o onFinished combina com o que a QuizScreen envia
+
         QuizScreen(
             quizId = quizId,
             questionDao = questionDao,

@@ -2,7 +2,7 @@ package com.example.quizapp.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.quizapp.data.FirebaseAuthRepository // Importe seu repositório
+import com.example.quizapp.data.FirebaseAuthRepository
 import com.example.quizapp.ui.state.SignUpUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +42,7 @@ class SignUpViewModel(
     fun signUp() {
         val current = _uiState.value
 
-        // 1. Validação local básica
+
         if (current.email.isBlank() || current.password.isBlank()) {
             _uiState.update { it.copy(error = "Preencha todos os campos") }
             return
@@ -53,19 +53,19 @@ class SignUpViewModel(
             return
         }
 
-        // 2. Chamada ao Firebase (Assíncrona)
+
         viewModelScope.launch {
             try {
-                // Limpa erros anteriores antes de tentar
+
                 _uiState.update { it.copy(error = null) }
 
-                // Tenta criar o usuário no Firebase
+
                 repository.signUp(current.email, current.password, current.name)
 
-                // Se chegou aqui, deu certo
+
                 _signUpIsSuccessful.value = true
             } catch (e: Exception) {
-                // Se der erro (ex: e-mail inválido), atualiza o estado de erro para a UI mostrar
+
                 _uiState.update { it.copy(error = e.localizedMessage ?: "Erro desconhecido") }
             }
         }

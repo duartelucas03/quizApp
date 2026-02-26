@@ -23,7 +23,6 @@ class FirebaseAuthRepository(
         authResult.user?.updateProfile(profileUpdates)?.await()
     }
 
-    // Use "signIn" para bater com o código do ViewModel anterior
     suspend fun signIn(email: String, password: String) {
         firebaseAuth.signInWithEmailAndPassword(email, password).await()
     }
@@ -45,7 +44,6 @@ class FirebaseAuthRepository(
 
         val historyRef = firestore.collection("users").document(uid).collection("history")
         history.forEach { entry ->
-            // ALTERAÇÃO: Trocamos 'entry.id' por 'entry.timestamp'
             historyRef.document(entry.timestamp.toString()).set(entry)
         }
     }
@@ -80,7 +78,6 @@ class FirebaseAuthRepository(
                 .await()
         } catch (e: Exception) {
             e.printStackTrace()
-            // Opcional: Implementar lógica para tentar enviar novamente depois se estiver sem internet
         }
     }
 

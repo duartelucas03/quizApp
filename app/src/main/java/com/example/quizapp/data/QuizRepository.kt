@@ -1,7 +1,7 @@
 package com.example.quizapp.data
 
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await // Import vital para resolver o erro do await()
+import kotlinx.coroutines.tasks.await
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.example.quizapp.data.Question
@@ -30,23 +30,18 @@ class QuizRepository(
     }
 
     fun saveRanking(username: String, score: Int) {
-        // Usamos o nome como ID. Na primeira vez, o Firebase cria o documento "teste".
-        // Na segunda vez, ele encontra o documento "teste" e soma o valor.
         val userRef = firestore.collection("ranking").document(username)
 
         val data = hashMapOf(
             "user" to username,
-            "score" to FieldValue.increment(score.toLong()), // Soma desde a primeira vez
+            "score" to FieldValue.increment(score.toLong()),
             "timestamp" to System.currentTimeMillis()
         )
-
-        // O 'merge' é o que garante que a primeira jogada funcione igual às outras
         userRef.set(data, SetOptions.merge())
             .addOnFailureListener { e ->
                 e.printStackTrace()
             }
     }
-
     suspend fun seedDatabaseIfNeeded() {
         try {
             val snapshot = firestore.collection("questions").get().await()
@@ -55,14 +50,14 @@ class QuizRepository(
                     category.questions.forEach { q ->
                         val questionMap = hashMapOf(
                             "text" to q.text,
-                            "a" to q.optionA, // Agora acessamos diretamente os campos
+                            "a" to q.optionA,
                             "b" to q.optionB,
                             "c" to q.optionC,
                             "d" to q.optionD,
                             "answer" to q.answer
                         )
                         firestore.collection("questions")
-                            .document(q.id) // Usa o ID que definimos no SampleData
+                            .document(q.id)
                             .set(questionMap)
                             .await()
                     }

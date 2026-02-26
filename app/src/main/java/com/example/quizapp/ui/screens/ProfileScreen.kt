@@ -92,7 +92,6 @@ fun ProfileScreen(
                 .background(Color(0xFFF5F5F5))
                 .verticalScroll(scrollState)
         ) {
-            // Header com Nome e Resumo Rápido
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +101,7 @@ fun ProfileScreen(
                     )
                     .padding(24.dp)
             ) {
-                // Botão de Logout posicionado no canto superior direito
+
                 Button(
                     onClick = onLogoutClick,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
@@ -136,7 +135,6 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Card de Resumo de Performance
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -166,14 +164,13 @@ fun ProfileScreen(
                 color = Color.Black
             )
 
-            // Lista de Histórico (Um por linha)
             Column(
                 modifier = Modifier
                     .padding(horizontal = 24.dp, vertical = 16.dp)
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Mock de Histórico - No futuro virá do seu banco SQL
+
                 if (historyList.isEmpty()) {
                     Text("Nenhum quiz realizado", modifier = Modifier.padding(16.dp), color = Color.Gray)
                 } else {

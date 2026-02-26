@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState // Importante para observar o perfil
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -20,7 +20,7 @@ import com.example.quizapp.data.SampleData
 import com.example.quizapp.ui.navigation.* import com.example.quizapp.ui.screens.QuizScreen
 import com.example.quizapp.ui.theme.QuizAppTheme
 import com.example.quizapp.ui.viewmodel.UserViewModel
-import com.google.firebase.auth.FirebaseAuth // Adicionado para o nome de fallback
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 return UserViewModel(userDao = userDao) as T
             }
         })[UserViewModel::class.java]
-        // Sincroniza questões para modo offline
+
         lifecycleScope.launch {
             quizRepository.seedDatabaseIfNeeded()
             quizRepository.syncQuestions()
@@ -68,7 +68,7 @@ fun QuizNavHost(
     quizRepository: QuizRepository,
     database: AppDatabase
 ) {
-    // Observamos o perfil para garantir que ele esteja sempre atualizado na UI
+
     val userProfile = userViewModel.userProfile.collectAsState()
 
     NavHost(

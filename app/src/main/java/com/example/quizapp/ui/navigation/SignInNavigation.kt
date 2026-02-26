@@ -21,7 +21,7 @@ fun NavGraphBuilder.signInScreen(
         val viewModel: SignInViewModel = viewModel()
         val uiState by viewModel.uiState.collectAsState()
 
-        // Alteração: Observar o estado de sucesso específico, igual ao SignUp
+
         val signInIsSuccessful by viewModel.signInIsSuccessful.collectAsState()
 
         LaunchedEffect(signInIsSuccessful) {
@@ -33,7 +33,6 @@ fun NavGraphBuilder.signInScreen(
         SignInScreen(
             uiState = uiState,
             onSignInClick = {
-                // Alteração: Chamar o novo método que criamos no passo anterior
                 viewModel.signIn()
             },
             onSignUpClick = onNavigateToSignUp

@@ -16,8 +16,6 @@ class SignInViewModel(
 
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
-
-    // Estado para a navegação saber que o login funcionou
     private val _signInIsSuccessful = MutableStateFlow(false)
     val signInIsSuccessful: StateFlow<Boolean> = _signInIsSuccessful.asStateFlow()
 
@@ -40,7 +38,6 @@ class SignInViewModel(
     fun signIn() {
         val current = _uiState.value
 
-        // Validação simples antes de chamar o Firebase
         if (current.user.isBlank() || current.password.isBlank()) {
             _uiState.update { it.copy(errorMessage = "Preencha usuário e senha") }
             return
@@ -48,16 +45,13 @@ class SignInViewModel(
 
         viewModelScope.launch {
             try {
-                // Limpa erro anterior
                 _uiState.update { it.copy(errorMessage = null) }
 
-                // No Firebase, o "user" aqui deve ser o e-mail
                 repository.signIn(current.user, current.password)
 
-                // Notifica sucesso
                 _signInIsSuccessful.value = true
             } catch (e: Exception) {
-                // Atualiza o erro para aparecer na tela
+
                 _uiState.update { it.copy(errorMessage = "Erro ao entrar: ${e.localizedMessage}") }
             }
         }

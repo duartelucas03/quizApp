@@ -27,10 +27,10 @@ class UserViewModel(
     private val userDao: UserDao
 ) : ViewModel() {
 
-    // 1. O fluxo principal que controla quem está logado
+
     private val userFlow = MutableStateFlow(repository.getCurrentUser())
 
-    // 2. Nome do usuário (Derivado do Perfil do Room)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val userName: StateFlow<String> = userFlow.flatMapLatest { user ->
         if (user != null) {
@@ -38,14 +38,12 @@ class UserViewModel(
         } else flowOf("Usuário")
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Usuário")
 
-    // 3. Fluxo 1: Dados acumulados do Perfil (Conectado ao Room)
     @OptIn(ExperimentalCoroutinesApi::class)
     val userProfile: StateFlow<UserProfileEntity?> = userFlow.flatMapLatest { user ->
         if (user != null) userDao.getProfile(user.uid)
         else flowOf(null)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // 4. Fluxo 2: Lista de Histórico Individual (Conectado ao Room)
     @OptIn(ExperimentalCoroutinesApi::class)
     val quizHistory: StateFlow<List<QuizHistoryEntity>> = userFlow.flatMapLatest { user ->
         if (user != null) userDao.getHistoryByUser(user.uid)
@@ -66,7 +64,7 @@ class UserViewModel(
                     val remoteName = user.displayName ?: "Usuário"
 
                     viewModelScope.launch {
-                        // 1. Sincroniza o Perfil
+
                         val current = userDao.getProfile(user.uid).firstOrNull()
                         if (current == null || current.name != remoteName) {
                             userDao.insertProfile(
@@ -168,7 +166,6 @@ class UserViewModel(
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
             val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 
-            // 1. Pegamos a lista estática UMA VEZ para evitar que a UI trave em loop
             val localHistory = userDao.getHistoryByUser(userId).first()
 
             localHistory.forEach { result ->
@@ -179,11 +176,11 @@ class UserViewModel(
                     "timestamp" to result.timestamp
                 )
 
-                // 2. Sincroniza com o Firebase usando o timestamp como ID do documento
+
                 db.collection("users")
                     .document(userId)
                     .collection("history")
-                    .document(result.timestamp.toString()) // Garante idempotência na nuvem
+                    .document(result.timestamp.toString())
                     .set(historyMap)
             }
         }

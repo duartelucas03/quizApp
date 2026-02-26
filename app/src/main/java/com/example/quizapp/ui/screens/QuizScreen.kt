@@ -20,11 +20,10 @@ fun QuizScreen(
 ) {
     val startTime = remember { System.currentTimeMillis() }
 
-    // 1. Coleta todas as questões do Room como um estado do Compose
+
     val allQuestions by questionDao.getAll().collectAsState(initial = emptyList())
 
-    // 2. Filtra as questões localmente para o quiz atual
-    // Usamos o quizId para filtrar (ex: se o id for '1', pegamos questões 'sql_1', 'sql_2'...)
+
     val quizQuestions = remember(allQuestions, quizId) {
         val prefix = when(quizId) {
             "1" -> "sql"
@@ -39,7 +38,7 @@ fun QuizScreen(
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var score by remember { mutableIntStateOf(0) }
 
-    // 3. Referência para a pergunta atual baseada na lista do Room
+
     val currentQuestion = quizQuestions.getOrNull(currentQuestionIndex)
     val totalQuestions = quizQuestions.size
     val progress = if (totalQuestions > 0) (currentQuestionIndex + 1).toFloat() / totalQuestions else 0f
@@ -78,7 +77,7 @@ fun QuizScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (quizQuestions.isEmpty()) {
-                // Caso o banco ainda esteja sincronizando ou esteja vazio
+
                 CircularProgressIndicator()
                 Text("Carregando questões do banco local...", modifier = Modifier.padding(top = 16.dp))
             } else {

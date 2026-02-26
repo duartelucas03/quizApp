@@ -23,7 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
-// 1. Modelo de dados idêntico ao que você salva no Firestore
+
 data class RankingEntry(
     val name: String = "",
     val totalPoints: Int = 0
@@ -39,19 +39,19 @@ fun RankingScreen(
 
     val db = FirebaseFirestore.getInstance()
 
-    // 2. Pega o nome ou email do usuário logado para marcar o "(Você)" dinamicamente
+
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val currentUserName = firebaseUser?.displayName ?: firebaseUser?.email?.substringBefore("@") ?: "Usuario"
 
-    // 3. Escuta o Firebase em tempo real (Sincronização Offline/Online)
+
     LaunchedEffect(Unit) {
         db.collection("users")
-            .orderBy("totalPoints", Query.Direction.DESCENDING) // Ordena pelos maiores pontos
+            .orderBy("totalPoints", Query.Direction.DESCENDING)
             .limit(10)
             .addSnapshotListener { snapshot, error ->
                 isLoading = false
                 if (snapshot != null) {
-                    // Mapeia os documentos para a lista real
+
                     leaderboardReal = snapshot.toObjects(RankingEntry::class.java)
                 }
             }
@@ -90,7 +90,7 @@ fun RankingScreen(
                 .padding(paddingValues)
                 .background(Color(0xFFF5F5F5))
         ) {
-            // Cabeçalho com troféu idêntico ao seu layout
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +134,7 @@ fun RankingScreen(
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     itemsIndexed(leaderboardReal) { index, entry ->
-                        // Verifica se o nome no Firebase bate com o seu nome atual
+
                         val isMe = entry.name == currentUserName || (entry.name == "teste" && currentUserName == "teste")
                         val displayName = if (isMe) "${entry.name} (Você)" else entry.name
 
@@ -149,9 +149,9 @@ fun RankingScreen(
 @Composable
 fun RankingRow(rank: Int, name: String, score: Int, isCurrentUser: Boolean) {
     val rankColor = when (rank) {
-        1 -> Color(0xFFFFD700) // Ouro
-        2 -> Color(0xFFC0C0C0) // Prata
-        3 -> Color(0xFFCD7F32) // Bronze
+        1 -> Color(0xFFFFD700)
+        2 -> Color(0xFFC0C0C0)
+        3 -> Color(0xFFCD7F32)
         else -> Color(0xFFE0E0E0)
     }
 
@@ -164,7 +164,7 @@ fun RankingRow(rank: Int, name: String, score: Int, isCurrentUser: Boolean) {
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Círculo com a posição
+
         Box(
             modifier = Modifier
                 .size(38.dp)
