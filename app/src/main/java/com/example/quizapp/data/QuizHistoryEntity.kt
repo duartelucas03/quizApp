@@ -1,14 +1,16 @@
 package com.example.quizapp.data
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "quiz_history")
+@Entity(
+    tableName = "quiz_history",
+    primaryKeys = ["userId", "timestamp"]
+)
 data class QuizHistoryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val userId: String,
+    val timestamp: Long = System.currentTimeMillis(),
     val quizTitle: String,
     val score: String,
-    val timeSpent: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timeSpent: String
+
 )

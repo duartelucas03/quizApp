@@ -45,7 +45,8 @@ class FirebaseAuthRepository(
 
         val historyRef = firestore.collection("users").document(uid).collection("history")
         history.forEach { entry ->
-            historyRef.document(entry.id.toString()).set(entry)
+            // ALTERAÇÃO: Trocamos 'entry.id' por 'entry.timestamp'
+            historyRef.document(entry.timestamp.toString()).set(entry)
         }
     }
 

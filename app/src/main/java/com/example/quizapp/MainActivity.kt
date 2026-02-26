@@ -31,25 +31,24 @@ class MainActivity : ComponentActivity() {
         val userDao = database.userDao()
         val questionDao = database.questionDao()
         val quizRepository = QuizRepository(questionDao)
-
+        val userViewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return UserViewModel(userDao = userDao) as T
+            }
+        })[UserViewModel::class.java]
         // Sincroniza questões para modo offline
         lifecycleScope.launch {
             quizRepository.seedDatabaseIfNeeded()
             quizRepository.syncQuestions()
+            if (FirebaseAuth.getInstance().currentUser != null) {
+                userViewModel.syncLocalHistoryToFirebase()
+            }
         }
 
         enableEdgeToEdge()
         setContent {
             QuizAppTheme {
                 val navController = rememberNavController()
-                val userViewModel: UserViewModel = viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            @Suppress("UNCHECKED_CAST")
-                            return UserViewModel(userDao = userDao) as T
-                        }
-                    }
-                )
 
                 QuizNavHost(
                     navController = navController,

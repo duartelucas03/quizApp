@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.example.quizapp.ui.screens.HistoryEntry
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-
+import kotlinx.coroutines.flow.first
 class UserViewModel(
     private val repository: FirebaseAuthRepository = FirebaseAuthRepository(),
     private val userDao: UserDao
@@ -96,7 +97,7 @@ class UserViewModel(
                                             )
                                         }
 
-                                        userDao.clearHistoryByUser(user.uid)
+
                                         userDao.insertAllHistory(cloudHistory)
                                     }
                                 }
@@ -161,4 +162,30 @@ class UserViewModel(
         }
     }
     /** GEMINI - final */
+
+    fun syncLocalHistoryToFirebase() {
+        viewModelScope.launch {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+            // 1. Pegamos a lista estática UMA VEZ para evitar que a UI trave em loop
+            val localHistory = userDao.getHistoryByUser(userId).first()
+
+            localHistory.forEach { result ->
+                val historyMap = hashMapOf(
+                    "quizTitle" to result.quizTitle,
+                    "score" to result.score,
+                    "timeSpent" to result.timeSpent,
+                    "timestamp" to result.timestamp
+                )
+
+                // 2. Sincroniza com o Firebase usando o timestamp como ID do documento
+                db.collection("users")
+                    .document(userId)
+                    .collection("history")
+                    .document(result.timestamp.toString()) // Garante idempotência na nuvem
+                    .set(historyMap)
+            }
+        }
+    }
 }
