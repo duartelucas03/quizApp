@@ -11,5 +11,6 @@ data class Question(
     val optionB: String,
     val optionC: String,
     val optionD: String,
-    val answer: Int
+    val answer: Int,
+    val categoryId: String = ""
 )

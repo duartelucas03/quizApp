@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
 
         // Sincroniza questões para modo offline
         lifecycleScope.launch {
+            quizRepository.seedDatabaseIfNeeded()
             quizRepository.syncQuestions()
         }
 

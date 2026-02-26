@@ -10,28 +10,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.quizapp.data.QuestionDao
 import com.example.quizapp.data.SampleData
 
 @Composable
 fun QuizScreen(
     quizId: String,
-    onQuizFinished: (Int, String) -> Unit // Retorna a pontuação final
+    questionDao: QuestionDao,
+    onQuizFinished: (Int, String) -> Unit
 ) {
     val startTime = remember { System.currentTimeMillis() }
-    // Busca os dados do quiz específico baseado no ID
     val quizData = remember(quizId) {
         SampleData.quizCategories.find { it.id.toString() == quizId }
     }
 
-    // Controle de estado para pergunta atual e pontuação
     var currentQuestionIndex by remember { mutableIntStateOf(0) }
     var score by remember { mutableIntStateOf(0) }
 
-    // Dados da pergunta atual
     val currentQuestion = quizData?.questions?.getOrNull(currentQuestionIndex)
     val totalQuestions = quizData?.questions?.size ?: 0
     val progress = if (totalQuestions > 0) (currentQuestionIndex + 1).toFloat() / totalQuestions else 0f
 
+    // --- SOLUÇÃO PARA O ERRO: Transformamos os campos individuais em uma lista ---
+    val options = remember(currentQuestion) {
+        if (currentQuestion != null) {
+            listOf(
+                currentQuestion.optionA,
+                currentQuestion.optionB,
+                currentQuestion.optionC,
+                currentQuestion.optionD
+            )
+        } else emptyList()
+    }
 
     Scaffold(
         topBar = {
@@ -51,14 +61,10 @@ fun QuizScreen(
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier = Modifier.padding(padding).fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Exibe o texto da pergunta real vindo do SampleData
             Text(
                 text = currentQuestion?.text ?: "Fim das perguntas",
                 style = MaterialTheme.typography.titleLarge,
@@ -67,12 +73,12 @@ fun QuizScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Botões de Alternativas dinâmicos baseados na pergunta atual
-            currentQuestion?.options?.forEachIndexed { index, option ->
+            // Usamos a nossa nova lista 'options' aqui
+            options.forEachIndexed { index, option ->
                 Button(
                     onClick = {
-                        // Verifica se a resposta está correta antes de avançar
-                        if (index == currentQuestion.correctAnswerIndex) {
+                        // Comparamos com 'answer' (o novo nome do campo)
+                        if (index == currentQuestion?.answer) {
                             score += 10
                         }
 
@@ -86,12 +92,10 @@ fun QuizScreen(
                             onQuizFinished(score, formattedTime)
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(option)
+                    Text(text = option)
                 }
             }
         }

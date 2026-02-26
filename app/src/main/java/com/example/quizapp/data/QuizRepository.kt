@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await // Import vital para resolver o erro do await()
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
+import com.example.quizapp.data.Question
 class QuizRepository(
     private val questionDao: QuestionDao,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -44,5 +45,31 @@ class QuizRepository(
             .addOnFailureListener { e ->
                 e.printStackTrace()
             }
+    }
+
+    suspend fun seedDatabaseIfNeeded() {
+        try {
+            val snapshot = firestore.collection("questions").get().await()
+            if (snapshot.isEmpty) {
+                SampleData.quizCategories.forEach { category ->
+                    category.questions.forEach { q ->
+                        val questionMap = hashMapOf(
+                            "text" to q.text,
+                            "a" to q.optionA, // Agora acessamos diretamente os campos
+                            "b" to q.optionB,
+                            "c" to q.optionC,
+                            "d" to q.optionD,
+                            "answer" to q.answer
+                        )
+                        firestore.collection("questions")
+                            .document(q.id) // Usa o ID que definimos no SampleData
+                            .set(questionMap)
+                            .await()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
